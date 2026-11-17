@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>待办清单</title>
+  <style>
+    /* ===== 全局重置 ===== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+      background: linear-gradient(160deg, #f7f8fa 0%, #eef1f5 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      /* 内容靠上，避免条目多了被挤 */
+      padding: 60px 20px;
+    }
+
+    /* ===== 主容器卡片 ===== */
+    .container {
+      width: 100%;
+      max-width: 480px;
+      background: #fff;
+      border-radius: 14px;
+      padding: 32px 28px;
+      box-shadow: 0 8px 30px rgba(28, 36, 48, 0.08);
+    }
+
+    h1 {
+      font-size: 22px;
+      color: #2c3138;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    /* ===== 输入区域：输入框 + 添加按钮 ===== */
+    .input-area {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    #todo-input {
+      flex: 1;
+      padding: 10px 14px;
+      font-size: 14px;
+      border: 1px solid #dde2e8;
+      border-radius: 8px;
+      outline: none;
+    }
+
+    #todo-input:focus {
+      border-color: #4a7dff;
+      /* 聚焦时高亮边框 */
+    }
+
+    #add-btn {
+      padding: 10px 20px;
+      font-size: 14px;
+      color: #fff;
+      background: #4a7dff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    #add-btn:hover {
+      opacity: 0.85;
+    }
+
+    /* ===== 待办列表 ===== */
+    #todo-list {
+      list-style: none;
+    }
+
+    /* 每一条待办 */
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 10px;
+      border-bottom: 1px solid #f0f2f5;
+      font-size: 15px;
+      color: #2c3138;
+    }
+
+    /* 文字部分占满剩余空间 */
+    .todo-text {
+      flex: 1;
+      word-break: break-all;
+    }
+
+    /* 完成后的文字：灰色 + 删除线 */
+    .todo-item.done .todo-text {
+      color: #a8b0ba;
+      text-decoration: line-through;
+    }
+
+    /* 删除按钮 */
+    .delete-btn {
+      padding: 4px 10px;
+      font-size: 13px;
+      color: #fff;
+      background: #ff6b6b;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .delete-btn:hover {
+      opacity: 0.8;
+    }
+
+    /* 空列表时的提示 */
+    .empty-tip {
+      text-align: center;
+      color: #a8b0ba;
+      font-size: 14px;
+      padding: 20px 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>待办清单</h1>
+
+    <!-- 输入区域 -->
+    <div class="input-area">
+      <input type="text" id="todo-input" placeholder="输入待办事项，回车快速添加">
+      <button id="add-btn">添加</button>
+    </div>
+
+    <!-- 待办列表，JS 动态生成 li -->
+    <ul id="todo-list"></ul>
+
+    <!-- 没有待办时的提示 -->
+    <p class="empty-tip" id="empty-tip">暂无待办，快去添加一条吧</p>
+  </div>
+
+  <script>
+    // ===== 获取页面元素 =====
+    var input = document.getElementById("todo-input");   // 输入框
+    var addBtn = document.getElementById("add-btn");     // 添加按钮
+    var list = document.getElementById("todo-list");     // 列表容器 <ul>
+    var emptyTip = document.getElementById("empty-tip"); // 空列表提示
+
+    // ===== 功能1：添加待办 =====
+    function addTodo() {
+      // trim() 去掉首尾空格，防止输入纯空格
+      var text = input.value.trim();
+      if (text === "") {
+        alert("请输入内容！");
+        return;
+      }
+
+      // 创建一条待办 <li>，内部结构：复选框 + 文字 + 删除按钮
+      var li = document.createElement("li");
+      li.className = "todo-item";
+
+      // 1) 复选框：勾选后标记为完成
+      var checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.onclick = function () {
+        // 勾选/取消勾选时切换 done 类，CSS 控制删除线样式
+        li.classList.toggle("done");
+      };
+
+      // 2) 待办文字
+      var span = document.createElement("span");
+      span.className = "todo-text";
+      span.textContent = text; // 用 textContent 防止 HTML 注入
+
+      // 3) 删除按钮：点击后移除整条待办
+      var delBtn = document.createElement("button");
+      delBtn.className = "delete-btn";
+      delBtn.textContent = "删除";
+      delBtn.onclick = function () {
+        li.remove();        // 从页面移除这一行
+        updateEmptyTip();   // 更新空列表提示
+      };
+
+      // 按顺序把三个元素放进 li，再把 li 放进列表
+      li.appendChild(checkbox);
+      li.appendChild(span);
+      li.appendChild(delBtn);
+      list.appendChild(li);
+
+      // 清空输入框并重新聚焦，方便连续添加
+      input.value = "";
+      input.focus();
+      updateEmptyTip();
+    }
+
+    // ===== 更新"暂无待办"提示的显示/隐藏 =====
+    function updateEmptyTip() {
+      // 列表里有子元素就隐藏提示，没有就显示
+      emptyTip.style.display = list.children.length === 0 ? "block" : "none";
+    }
+
+    // ===== 绑定事件 =====
+    // 点击"添加"按钮
+    addBtn.onclick = addTodo;
+
+    // 在输入框按回车也能添加（keyCode 13 是回车键）
+    input.onkeydown = function (e) {
+      if (e.key === "Enter") {
+        addTodo();
+      }
+    };
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>个人主页 - 张彦宇</title>
+  <style>
+    /* ===== 全局重置与基础样式 ===== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      /* 字体优先使用系统无衬线字体，保证各平台观感一致 */
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Microsoft YaHei", sans-serif;
+      /* 浅灰渐变背景，简洁不抢眼 */
+      background: linear-gradient(160deg, #f7f8fa 0%, #eef1f5 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      color: #2c3138;
+      line-height: 1.7;
+    }
+
+    /* ===== 主页卡片容器 ===== */
+    .card {
+      width: 100%;
+      max-width: 680px;
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 56px 48px 48px;
+      /* 极轻的阴影，制造浮起的层次感 */
+      box-shadow: 0 10px 40px rgba(28, 36, 48, 0.07);
+    }
+
+    /* ===== 头像区域 ===== */
+    .avatar-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 22px;
+    }
+
+    .avatar {
+      width: 112px;
+      height: 112px;
+      border-radius: 50%;
+      /* 用 CSS 画头像，不依赖外部图片，断网演示也不会裂图 */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 42px;
+      font-weight: 600;
+      color: #ffffff;
+      background: linear-gradient(135deg, #6c9bff, #4a7dff);
+      /* 细边框 + 外发光，让头像更精致 */
+      border: 3px solid #ffffff;
+      box-shadow: 0 0 0 1px #e3e7ed, 0 6px 18px rgba(28, 36, 48, 0.12);
+    }
+
+    /* ===== 姓名与职位 ===== */
+    .name {
+      font-size: 28px;
+      font-weight: 600;
+      text-align: center;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .title {
+      font-size: 14px;
+      text-align: center;
+      color: #8a939f;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+
+    /* ===== 自我介绍 ===== */
+    .intro {
+      font-size: 15px;
+      color: #525b66;
+      text-align: justify;
+      padding: 0 4px;
+      margin-bottom: 36px;
+    }
+
+    /* ===== 区块标题（技能） ===== */
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #2c3138;
+      letter-spacing: 1px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* 标题左侧的装饰竖线 */
+    .section-title::before {
+      content: "";
+      width: 3px;
+      height: 14px;
+      background: #4a7dff;
+      border-radius: 2px;
+    }
+
+    /* 进度区下方的小注：说明数值口径，避免被误读成熟练度 */
+    .skill-note {
+      font-size: 12px;
+      color: #98a1ac;
+      margin: -10px 0 18px;
+    }
+
+    /* ===== 技能列表 ===== */
+    .skill-list {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px 28px;
+    }
+
+    .skill-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    /* 技能名称与熟练度数值，左右分布 */
+    .skill-head {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      color: #3d454f;
+    }
+
+    .skill-percent {
+      color: #98a1ac;
+      font-size: 13px;
+    }
+
+    /* 进度条外槽 */
+    .bar {
+      height: 5px;
+      background: #eff2f6;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    /* 进度条填充部分，宽度由内联 style 控制 */
+    .bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, #6c9bff, #4a7dff);
+      /* 入场时从 0 宽度展开的动画 */
+      transform-origin: left;
+      animation: grow 1s ease-out forwards;
+    }
+
+    /* 进度条展开动画关键帧 */
+    @keyframes grow {
+      from {
+        transform: scaleX(0);
+      }
+
+      to {
+        transform: scaleX(1);
+      }
+    }
+
+    /* ===== 底部联系方式 ===== */
+    .footer {
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 1px solid #f0f2f5;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px 18px;
+      font-size: 13px;
+      color: #8a939f;
+    }
+
+    .footer a {
+      color: #4a7dff;
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+
+    .footer a:hover {
+      opacity: 0.7;
+    }
+
+    /* ===== 移动端适配：缩小留白、技能改为单列 ===== */
+    @media (max-width: 560px) {
+      .card {
+        padding: 40px 24px 36px;
+        border-radius: 14px;
+      }
+
+      .name {
+        font-size: 24px;
+      }
+
+      .skill-list {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 主体卡片：整页只有这一块内容容器 -->
+  <main class="card">
+    <!-- 头像：纯 CSS 生成，离线也能正常显示 -->
+    <div class="avatar-wrapper">
+      <div class="avatar">张</div>
+    </div>
+
+    <!-- 姓名与身份 -->
+    <h1 class="name">张彦宇</h1>
+    <p class="title">网络工程 · 前后端方向</p>
+
+    <!-- 自我介绍段落 -->
+    <p class="intro">
+      杭州电子科技大学网络工程专业大二，正在把前端到后端的整条链路亲手走一遍。
+      目前能独立写出 HTML/CSS 页面结构，能读懂 AI 生成的 JavaScript 并指出问题，
+      正在向 Vue 组件化和后端接口推进。我的目标不是手写精通，而是能把一个想法拆成技术方案，
+      说清每一步该用什么框架，再指挥 AI 把系统做出来。
+    </p>
+
+    <!-- 技能列表区块 -->
+    <section>
+      <h2 class="section-title">学习进度 PROGRESS</h2>
+      <p class="skill-note">按 8 周计划的实际推进程度标注，不是熟练度评分。</p>
+
+      <ul class="skill-list">
+        <!-- 每一项：技术名 + 当前阶段 + 进度条 -->
+        <li class="skill-item">
+          <div class="skill-head">
+            <span>HTML / CSS</span>
+            <span class="skill-percent">已动手改写</span>
+          </div>
+          <div class="bar">
+            <div class="bar-fill" style="width: 70%;"></div>
+          </div>
+        </li>
+
+        <li class="skill-item">
+          <div class="skill-head">
+            <span>JavaScript · DOM</span>
+            <span class="skill-percent">能读懂 AI 代码</span>
+          </div>
+          <div class="bar">
+            <div class="bar-fill" style="width: 55%;"></div>
+          </div>
+        </li>
+
+        <li class="skill-item">
+          <div class="skill-head">
+            <span>Vue</span>
+            <span class="skill-percent">概念在读</span>
+          </div>
+          <div class="bar">
+            <div class="bar-fill" style="width: 25%;"></div>
+          </div>
+        </li>
+
+        <li class="skill-item">
+          <div class="skill-head">
+            <span>后端接口</span>
+            <span class="skill-percent">概念在读</span>
+          </div>
+          <div class="bar">
+            <div class="bar-fill" style="width: 20%;"></div>
+          </div>
+        </li>
+
+        <li class="skill-item">
+          <div class="skill-head">
+            <span>MySQL</span>
+            <span class="skill-percent">概念在读</span>
+          </div>
+          <div class="bar">
+            <div class="bar-fill" style="width: 20%;"></div>
+          </div>
+        </li>
+
+        <li class="skill-item">
+          <div class="skill-head">
+            <span>Git / GitHub</span>
+            <span class="skill-percent">已接入工具链</span>
+          </div>
+          <div class="bar">
+            <div class="bar-fill" style="width: 50%;"></div>
+          </div>
+        </li>
+      </ul>
+    </section>
+
+    <!-- 底部联系信息 -->
+    <footer class="footer">
+      <span>杭州电子科技大学 · 网络工程</span>
+      <a href="https://github.com/kok869" target="_blank" rel="noopener">GitHub</a>
+    </footer>
+  </main>
+</body>
+
+</html>
