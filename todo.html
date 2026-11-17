@@ -34,6 +34,20 @@
       box-shadow: 0 8px 30px rgba(28, 36, 48, 0.08);
     }
 
+    /* 返回主页的链接：低调一点的灰色，避免抢标题 */
+    .back-link {
+      display: inline-block;
+      font-size: 13px;
+      color: #8a939f;
+      text-decoration: none;
+      margin-bottom: 14px;
+      transition: color 0.2s;
+    }
+
+    .back-link:hover {
+      color: #4a7dff;
+    }
+
     h1 {
       font-size: 22px;
       color: #2c3138;
@@ -133,6 +147,8 @@
 
 <body>
   <div class="container">
+    <a href="index.html" class="back-link">← 返回主页</a>
+
     <h1>待办清单</h1>
 
     <!-- 输入区域 -->
