@@ -119,14 +119,17 @@
     }
 
     /* ===== 技能列表 ===== */
+    /* 用 flex 横排 + 自动换行，一行放得下两个就两个，窄屏自动变一个 */
     .skill-list {
       list-style: none;
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      display: flex;
+      flex-wrap: wrap;
       gap: 16px 28px;
     }
 
     .skill-item {
+      /* flex-grow 1 + 基准宽度 240px：两个凑满一行，宽度不够就换行 */
+      flex: 1 1 240px;
       display: flex;
       flex-direction: column;
       gap: 6px;
@@ -174,6 +177,26 @@
       }
     }
 
+    /* ===== 兴趣爱好标签 ===== */
+    /* 和上方技能区拉开距离，否则标题会贴着最后一行的进度条 */
+    .interests-section {
+      margin-top: 34px;
+    }
+
+    .interests {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .interest-tag {
+      padding: 5px 14px;
+      font-size: 13px;
+      color: #4a7dff;
+      background: #f2f6ff;
+      border-radius: 14px;
+    }
+
     /* ===== 底部联系方式 ===== */
     .footer {
       margin-top: 40px;
@@ -208,8 +231,9 @@
         font-size: 24px;
       }
 
-      .skill-list {
-        grid-template-columns: 1fr;
+      /* 窄屏时每个技能占满一行 */
+      .skill-item {
+        flex: 1 1 100%;
       }
     }
   </style>
@@ -302,6 +326,16 @@
           </div>
         </li>
       </ul>
+    </section>
+
+    <!-- 兴趣爱好区块 -->
+    <section class="interests-section">
+      <h2 class="section-title">兴趣爱好 INTERESTS</h2>
+      <div class="interests">
+        <span class="interest-tag">跑步</span>
+        <span class="interest-tag">游戏</span>
+        <span class="interest-tag">电影</span>
+      </div>
     </section>
 
     <!-- 底部联系信息 -->

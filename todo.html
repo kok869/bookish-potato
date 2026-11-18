@@ -107,6 +107,14 @@
       color: #2c3138;
     }
 
+    /* 序号：固定宽度 + 右对齐，否则文字长短不同会错位 */
+    .todo-index {
+      width: 22px;
+      font-size: 13px;
+      color: #a8b0ba;
+      text-align: right;
+    }
+
     /* 文字部分占满剩余空间 */
     .todo-text {
       flex: 1;
@@ -142,6 +150,40 @@
       font-size: 14px;
       padding: 20px 0;
     }
+
+    /* 列表底部工具条：左边计数，右边清空 */
+    .todo-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid #f0f2f5;
+      font-size: 13px;
+      color: #8a939f;
+    }
+
+    /* 清空按钮做成弱化的描边样式，避免和红色的“删除”抢注意力 */
+    .clear-btn {
+      padding: 6px 12px;
+      font-size: 13px;
+      color: #8a939f;
+      background: #fff;
+      border: 1px solid #dde2e8;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .clear-btn:hover:not(:disabled) {
+      color: #ff6b6b;
+      border-color: #ff6b6b;
+    }
+
+    .clear-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 
@@ -162,14 +204,22 @@
 
     <!-- 没有待办时的提示 -->
     <p class="empty-tip" id="empty-tip">暂无待办，快去添加一条吧</p>
+
+    <!-- 底部工具条：条数统计 + 一键清空 -->
+    <div class="todo-bar">
+      <span id="todo-count">共 0 条</span>
+      <button id="clear-btn" class="clear-btn">清空全部</button>
+    </div>
   </div>
 
   <script>
     // ===== 获取页面元素 =====
-    var input = document.getElementById("todo-input");   // 输入框
-    var addBtn = document.getElementById("add-btn");     // 添加按钮
-    var list = document.getElementById("todo-list");     // 列表容器 <ul>
-    var emptyTip = document.getElementById("empty-tip"); // 空列表提示
+    var input = document.getElementById("todo-input");     // 输入框
+    var addBtn = document.getElementById("add-btn");       // 添加按钮
+    var list = document.getElementById("todo-list");       // 列表容器 <ul>
+    var emptyTip = document.getElementById("empty-tip");   // 空列表提示
+    var countText = document.getElementById("todo-count"); // "共 N 条"统计
+    var clearBtn = document.getElementById("clear-btn");   // 清空全部
 
     // ===== 功能1：添加待办 =====
     function addTodo() {
@@ -180,33 +230,38 @@
         return;
       }
 
-      // 创建一条待办 <li>，内部结构：复选框 + 文字 + 删除按钮
+      // 创建一条待办 <li>，内部结构：序号 + 复选框 + 文字 + 删除按钮
       var li = document.createElement("li");
       li.className = "todo-item";
 
-      // 1) 复选框：勾选后标记为完成
+      // 1) 序号：先留空，等 updateStatus() 统一重排，删掉中间一条才不会跳号
+      var idx = document.createElement("span");
+      idx.className = "todo-index";
+
+      // 2) 复选框：勾选后标记为完成
       var checkbox = document.createElement("input");
       checkbox.type = "checkbox";
-      checkbox.onclick = function () {
+      checkbox.addEventListener("click", function () {
         // 勾选/取消勾选时切换 done 类，CSS 控制删除线样式
         li.classList.toggle("done");
-      };
+      });
 
-      // 2) 待办文字
+      // 3) 待办文字
       var span = document.createElement("span");
       span.className = "todo-text";
       span.textContent = text; // 用 textContent 防止 HTML 注入
 
-      // 3) 删除按钮：点击后移除整条待办
+      // 4) 删除按钮：点击后移除整条待办
       var delBtn = document.createElement("button");
       delBtn.className = "delete-btn";
       delBtn.textContent = "删除";
-      delBtn.onclick = function () {
-        li.remove();        // 从页面移除这一行
-        updateEmptyTip();   // 更新空列表提示
-      };
+      delBtn.addEventListener("click", function () {
+        li.remove();      // 从页面移除这一行
+        updateStatus();   // 删完要重排序号、更新计数
+      });
 
-      // 按顺序把三个元素放进 li，再把 li 放进列表
+      // 按顺序把四个元素放进 li，再把 li 放进列表
+      li.appendChild(idx);
       li.appendChild(checkbox);
       li.appendChild(span);
       li.appendChild(delBtn);
@@ -215,25 +270,56 @@
       // 清空输入框并重新聚焦，方便连续添加
       input.value = "";
       input.focus();
-      updateEmptyTip();
+      updateStatus();
     }
 
-    // ===== 更新"暂无待办"提示的显示/隐藏 =====
-    function updateEmptyTip() {
-      // 列表里有子元素就隐藏提示，没有就显示
-      emptyTip.style.display = list.children.length === 0 ? "block" : "none";
+    // ===== 功能2：清空全部 =====
+    function clearAll() {
+      var total = list.children.length;
+      if (total === 0) {
+        return;
+      }
+      // 一次性删掉多条不可撤销，先confirm确认
+      if (!confirm("确定要清空全部 " + total + " 条待办吗？")) {
+        return;
+      }
+      list.innerHTML = "";
+      updateStatus();
+    }
+
+    // ===== 统一更新：序号、空提示、条数统计、清空按钮状态 =====
+    // 这三件事都依赖"现在列表里有几条"，放在一个函数里就不会漏更新
+    function updateStatus() {
+      var items = list.children;
+
+      // 序号从 1 开始重排
+      for (var i = 0; i < items.length; i++) {
+        items[i].querySelector(".todo-index").textContent = (i + 1) + ".";
+      }
+
+      // 有内容就隐藏空提示
+      emptyTip.style.display = items.length === 0 ? "block" : "none";
+
+      // 条数统计
+      countText.textContent = "共 " + items.length + " 条";
+
+      // 没有待办时，清空按钮没有意义，置灰
+      clearBtn.disabled = items.length === 0;
     }
 
     // ===== 绑定事件 =====
-    // 点击"添加"按钮
-    addBtn.onclick = addTodo;
+    addBtn.addEventListener("click", addTodo);
+    clearBtn.addEventListener("click", clearAll);
 
-    // 在输入框按回车也能添加（keyCode 13 是回车键）
-    input.onkeydown = function (e) {
+    // 在输入框按回车也能添加（Enter 键）
+    input.addEventListener("keydown", function (e) {
       if (e.key === "Enter") {
         addTodo();
       }
-    };
+    });
+
+    // 页面刚打开先跑一次，保证初始状态（提示、计数、按钮）都是对的
+    updateStatus();
   </script>
 </body>
 
